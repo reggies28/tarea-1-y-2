@@ -1,7 +1,11 @@
-
 import numpy
 # scipy.special for the sigmoid function expit()
 import scipy.special
+# library for plotting arrays
+import matplotlib.pyplot
+# ensure the plots are inside this notebook, not an external window
+
+
 # neural network class definition
 class neuralNetwork:
     
@@ -76,21 +80,68 @@ class neuralNetwork:
         
         return final_outputs
 
-def main(input_nodes,hidden_nodes,output_nodes,learning_rate):
-    # number of input, hidden and output nodes
-    #input_nodes = 3
-    #hidden_nodes = 3
-    #output_nodes = 3
+# number of input, hidden and output nodes
+input_nodes = 784
+hidden_nodes = 200
+output_nodes = 10
 
-    # learning rate is 0.3
-    #learning_rate = 0.3
+# learning rate
+learning_rate = 0.1
 
-    # create instance of neural network
-    n = neuralNetwork(input_nodes,hidden_nodes,output_nodes, learning_rate)
+# create instance of neural network
+n = neuralNetwork(input_nodes,hidden_nodes,output_nodes, learning_rate)
 
-    for x in n.query([1.0, 0.5, -1.5]):
-        print(x)
+# load the mnist training data CSV file into a list
+training_data_file = open("mnist_train_100.csv", 'r')
+training_data_list = training_data_file.readlines()
+training_data_file.close()
 
-main(3,3,3,0.3)
-main(4,3,4,0.4)
+# epochs is the number of times the training data set is used for training
+epochs = 5
 
+for e in range(epochs):
+    # go through all records in the training data set
+    for record in training_data_list:
+        # split the record by the ',' commas
+        all_values = record.split(',')
+        # scale and shift the inputs
+        inputs = (numpy.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
+        # create the target output values (all 0.01, except the desired label which is 0.99)
+        targets = numpy.zeros(output_nodes) + 0.01
+        # all_values[0] is the target label for this record
+        targets[int(all_values[0])] = 0.99
+        n.train(inputs, targets)
+        pass
+    pass
+
+# load the mnist test data CSV file into a list
+test_data_file = open("mnist_test_10.csv", 'r')
+test_data_list = test_data_file.readlines()
+test_data_file.close()
+
+scorecard = []
+for record in test_data_list:
+    # split the record by the ',' commas
+    all_values = record.split(',')
+    # correct answer is first value
+    correct_label = int(all_values[0])
+    # scale and shift the inputs
+    inputs = (numpy.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
+    # query the network
+    outputs = n.query(inputs)
+    # the index of the highest value corresponds to the label
+    label = numpy.argmax(outputs)
+    # append correct or incorrect to list
+    if (label == correct_label):
+        # network's answer matches correct answer, add 1 to scorecard
+        scorecard.append(1)
+    else:
+        # network's answer doesn't match correct answer, add 0 to scorecard
+        scorecard.append(0)
+        pass
+    
+    pass
+
+
+scorecard_array = numpy.asarray(scorecard)
+print ("performance = ", scorecard_array.sum() / scorecard_array.size)
